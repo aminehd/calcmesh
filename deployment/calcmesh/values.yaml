@@ -1,0 +1,11 @@
+# Placeholder server until the real calculators exist: it answers every
+# request with its own name. Swap the image when calculators/ has code.
+image: hashicorp/http-echo:1.0
+port: 8080
+replicas: 1
+
+calculators:
+  - addition
+  - subtraction
+  - multiplication
+  - division

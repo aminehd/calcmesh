@@ -1,0 +1,25 @@
+{{- range .Values.calculators }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ . }}
+  labels:
+    {{- include "calcmesh.labels" (dict "name" .) | nindent 4 }}
+spec:
+  replicas: {{ $.Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ . }}
+  template:
+    metadata:
+      labels:
+        {{- include "calcmesh.labels" (dict "name" .) | nindent 8 }}
+    spec:
+      containers:
+        - name: calculator
+          image: {{ $.Values.image }}
+          args: ["-listen=:{{ $.Values.port }}", "-text={{ . }}"]
+          ports:
+            - containerPort: {{ $.Values.port }}
+{{- end }}

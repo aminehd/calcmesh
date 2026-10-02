@@ -1,0 +1,15 @@
+{{- range .Values.calculators }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ . }}
+  labels:
+    {{- include "calcmesh.labels" (dict "name" .) | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ . }}
+  ports:
+    - port: 80
+      targetPort: {{ $.Values.port }}
+{{- end }}
