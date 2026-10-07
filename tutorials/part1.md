@@ -50,8 +50,7 @@ calcmesh/
 │   ├── multiplication/
 │   └── division/
 ├── envoy/                       # the proxy config goes here (placeholder for now)
-├── deployment/
-│   └── calcmesh/                # the Helm chart (Part 2)
+├── operator/                    # my own operator and its Helm chart (next parts)
 ├── tutorials/
 │   └── part1.md
 └── README.md

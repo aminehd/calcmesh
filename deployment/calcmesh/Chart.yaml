@@ -1,4 +1,0 @@
-apiVersion: v2
-name: calcmesh
-description: One Deployment and one Service per calculator.
-version: 0.1.0
