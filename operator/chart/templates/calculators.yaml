@@ -1,0 +1,17 @@
+{{- /*
+TODO(Amineh): loop over .Values.ops and create one Calculator per op.
+  - range over .Values.ops
+  - each object starts with ---
+  - apiVersion: calcmesh.io/v1, kind: Calculator
+  - metadata.name: the op, spec.op: the op
+  - inside range, . is the current item
+*/ -}}
+{{- range $op := .Values.ops }}
+---
+apiVersion: calcmesh.io/v1
+kind: Calculator 
+metadata:
+  name: {{ $op   }}
+spec:
+  op: {{ $op }}
+{{ end }}

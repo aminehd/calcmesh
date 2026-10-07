@@ -1,0 +1,60 @@
+# Step 1: teach the cluster a new word, "Calculator".
+# After `kubectl apply -f operator/crd.yaml`, the API server will accept
+# objects of kind Calculator, just like it knows Deployment or Service.
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # TODO: the name must be <plural>.<group>
+  name: calculators.calcmesh.io
+spec:
+  # TODO: the API group, a domain-like name you own. Use calcmesh.io
+  group: calcmesh.io
+  names:
+    kind: Calculator
+    listKind: CalculatorList 
+    plural: calculators
+    singular: calculator
+    # TODO: four names: kind (Calculator), listKind, plural, singular
+    # optional: shortNames: [calc]  so `kubectl get calc` works
+  # TODO: Namespaced (lives in one namespace, like a Deployment) or Cluster (cluster-wide, like a Node)?
+  scope: Namespaced 
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      # Lets the controller write .status separately from .spec,
+      # (kubebuilder writes this as //+kubebuilder:subresource:status).
+      subresources:
+        status: {}
+      # The shape of a Calculator. The API server rejects anything else.
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [op]
+              properties:
+                op:
+                  type: string
+                  enum: [addition, subtraction, multiplication, division, modulo]
+                replicas:
+                  type: integer
+                  minimum: 1
+                  default: 1
+            status:
+              type: object
+              properties:
+                ready:
+                  type: boolean
+                message:
+                  type: string
+      # Extra columns shown by `kubectl get calc`.
+      additionalPrinterColumns:
+        - name: Op
+          type: string
+          jsonPath: .spec.op
+        - name: Ready
+          type: boolean
+          jsonPath: .status.ready

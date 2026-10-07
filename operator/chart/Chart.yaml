@@ -1,0 +1,4 @@
+apiVersion: v2
+name: calculators
+description: One Calculator object per op. The operator turns each into a Deployment and a Service.
+version: 0.1.0
