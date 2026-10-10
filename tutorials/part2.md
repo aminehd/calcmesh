@@ -30,7 +30,7 @@ Since writing Kubernetes manifests can be repetitive, we use Helm syntax to writ
 However, the focus of this tutorial is more on the flow of things that happen after the `kubectl apply` command. Let's take a very simple manifest file:
 ```yaml
 apiVersion: apps/v1
-kind: Deployment
+kind: ReplicaSet
 metadata:
   name: hello
 spec:
@@ -47,8 +47,10 @@ spec:
 ```
 
 [![What happens on kubectl apply](https://raw.githubusercontent.com/aminehd/calcmesh/main/tutorials/images/kubectl-apply.gif)](https://github.com/aminehd/calcmesh/blob/main/tutorials/images/kubectl-apply.gif)
-By running `kubectl apply -f deployment.yaml`, you send a request to the API server to create a new Deployment. The API server itself does not attempt to create any Pods.
-Instead, the API server stores the Deployment in etcd and notifies the Deployment controller, which creates a ReplicaSet and writes it back to the API server. The ReplicaSet controller gets notified and creates the 2 Pods we asked for, again by writing them to the API server. Now the scheduler gets notified that there are Pods without a node, picks a node for each and writes that choice back, which is saved in etcd again. Then the kubelet on that node gets notified that Pods were assigned to it. The kubelet asks the container runtime to pull the image and start the containers, and then reports the Pods' status (Running) back to the API server. Notice that nobody calls anybody directly: every step is "read from the API server, do my part, write back to the API server".
+
+By running `kubectl apply -f replicaset.yaml`, you send a request to the API server to create a new `ReplicaSet`. The API server itself does not attempt to create any Pods.
+
+Instead, the API server stores the ReplicaSet in etcd and notifies the ReplicaSet controller, which creates the 2 Pods we asked for by writing them back to the API server. Now the scheduler gets notified that there are Pods without a node, picks a node for each and writes that choice back, which is saved in etcd again. Then the kubelet on that node gets notified that Pods were assigned to it. The kubelet asks the container runtime to pull the image and start the containers, and then reports the Pods' status (Running) back to the API server. Notice that nobody calls anybody directly: every step is "read from the API server, do my part, write back to the API server".
 
 And here is the nice part: if one of the Pods dies, the ReplicaSet controller notices that it wants 2 Pods but sees only 1, and creates a new one. The same loop that created the Pods also heals them.
 
