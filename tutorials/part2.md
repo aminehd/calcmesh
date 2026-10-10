@@ -8,7 +8,7 @@ All the code for this series is on GitHub: [github.com/aminehd/calcmesh](https:/
 
 
 ## 1. Where we left off and what's new
-In Part 1 of this tutorial, I explained Kubernetes manifest files and set up a Kubernetes cluster. Today I wanna talk about how the Kubernetes control plane reacts to such manifest files, and then go through one of its patterns. First, let's take a look at the folder structure:
+In Part 1 of this tutorial, I explained Kubernetes manifest files and set up a Kubernetes cluster. Today I wanna talk about what happens after running `kubectl apply ...`. Here is the folder structure:
 ```
 calcmesh/
 ├── bootstrap/
@@ -26,7 +26,8 @@ calcmesh/
 └── README.md
 ```
 
-There are 2 different things that get in our way before reaching the goal of this tutorial. First is what a Kubernetes manifest file is, which we already discussed in Part 1; `calculator.yaml` is one of them. Second is the content of these manifest files, specifically the kind `CustomResourceDefinition`. I could have started this tutorial with simpler kinds that are defined by Kubernetes itself, such as Pod or Deployment. However, I wanna skip the preliminary concepts. Just one note: to deploy an object of type Pod, you can write the YAML file below and run `kubectl apply -f pod.yaml`:
+Since writing Kubernetes manifests can be repetitive, we use Helm syntax to write higher-level code (loops, lookups...) and render the bare-bones manifest files from it.
+However, the focus of this tutorial is more on the flow of things that happen after the `kubectl apply` command. Let's take a very simple manifest file:
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -38,9 +39,9 @@ spec:
       image: nginx
 ```
 
-So what happens after you run `kubectl apply ...`? You request the Kubernetes API server to create a new object of kind Pod. The API server creates the object and then notifies the controllers watching Pods (the scheduler and the kubelet), and they run their reconcile loops. See the picture:
-
 [![What happens on kubectl apply](https://raw.githubusercontent.com/aminehd/calcmesh/main/tutorials/images/kubectl-apply.gif)](https://github.com/aminehd/calcmesh/blob/main/tutorials/images/kubectl-apply.gif)
+By running `kubectl apply -f pod.yaml`, you send a request to the API server to create a new Pod. The API server itself does not attempt to create the Pod on a node.
+Instead, the API server stores the Pod in etcd and notifies the scheduler and the internal controllers. Once the scheduler picks a node for it, it writes that choice back to the API server, which saves it in etcd again. Now the kubelet on that node gets notified that a Pod was assigned to it. The kubelet asks the container runtime to pull the image and start the container, and then reports the Pod's status (Running) back to the API server. Notice that nobody calls anybody directly: every step is "read from the API server, do my part, write back to the API server".
 
 There is another pattern you can use Kubernetes for. You can define new kinds with CRDs (CustomResourceDefinitions).
 
@@ -61,7 +62,7 @@ See the image:
 
 [![kubectl apply with your own operator](https://raw.githubusercontent.com/aminehd/calcmesh/main/tutorials/images/kubectl-apply-operator.gif)](https://github.com/aminehd/calcmesh/blob/main/tutorials/images/kubectl-apply-operator.gif)
 
-now what is the point of this back and forth, why not directly api server do what you wnat instead of controller. The kubernetes system archticuture is to handle failures and make request fasts and non blocking and recoverable. These pattersn are state of the art for doing so. Also Kubernetes was the result of years of building internal tools at Google (Borg, ...). 
+Now, what is the point of this back and forth? Why doesn't the API server directly do what you want, instead of a controller? The Kubernetes system architecture is designed to handle failures and to make requests fast, non-blocking and recoverable. These patterns are the state of the art for doing so. Also, Kubernetes was the result of years of building internal tools at Google (Borg, ...).
 
 
 
