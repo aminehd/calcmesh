@@ -37,7 +37,32 @@ spec:
     - name: hello
       image: nginx
 ```
-The simplest way you can use Kubernetes is to deploy a Pod like this to your cluster. Now there is a detail about how Kubernetes does this deployment, which is very important if you wanna use Kubernetes in a more versatile way. When you write a manifest of a certain kind and run `kubectl apply`, kubectl sends a request to the Kubernetes API server to create a new object of that kind. Then there is a controller that is watching that kind, so the API server notifies it, and the controller does the actual work. For built-in kinds like Pod or Deployment, these controllers come with Kubernetes. The good part is that you can define your own kind and implement its controller yourself; that is what people call an operator. Then you can do all sorta nasty things there: say once an object of this kind is created, DDoS the whole computer, send an email to my boss, deploy some pods...
+
+So what happens after you run `kubectl apply ...`? You request the Kubernetes API server to create a new object of kind Pod. The API server creates the object and then notifies the controllers watching Pods (the scheduler and the kubelet), and they run their reconcile loops. See the picture:
+
+[![What happens on kubectl apply](https://raw.githubusercontent.com/aminehd/calcmesh/main/tutorials/images/kubectl-apply.gif)](https://github.com/aminehd/calcmesh/blob/main/tutorials/images/kubectl-apply.gif)
+
+There is another pattern you can use Kubernetes for. You can define new kinds with CRDs (CustomResourceDefinitions).
+
+Then you can run watchers called operators. Operators can run outside your cluster or as a pod in your cluster. Then you can create a manifest of that type, for example:
+```yaml
+apiVersion: example.com/v1
+kind: MyCustomType
+metadata:
+  name: hellomytype
+spec:
+  containers:
+    - name: custom
+      customInput: adflasdfj
+```
+After applying, the API server will save the object in its memory (etcd). Since this is a new type, it won't go to the built-in controllers; instead it goes to your operator, and then your operator may ask the API server to create pods or other custom resources. If it creates a pod, the API server again saves it in etcd and notifies the built-in controllers.
+
+See the image:
+
+[![kubectl apply with your own operator](https://raw.githubusercontent.com/aminehd/calcmesh/main/tutorials/images/kubectl-apply-operator.gif)](https://github.com/aminehd/calcmesh/blob/main/tutorials/images/kubectl-apply-operator.gif)
+
+now what is the point of this back and forth, why not directly api server do what you wnat instead of controller. The kubernetes system archticuture is to handle failures and make request fasts and non blocking and recoverable. These pattersn are state of the art for doing so. Also Kubernetes was the result of years of building internal tools at Google (Borg, ...). 
+
 
 
 ## 2. Kubernetes concepts
